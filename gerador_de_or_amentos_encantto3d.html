@@ -1,0 +1,2679 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="antialiased">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encantto3D • Gerador de Orçamentos</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans, Space Grotesk & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Space Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            brand: {
+              lime: '#CCF046',
+              limeHover: '#BFE632',
+              pink: '#F51B8E',
+              pinkHover: '#DC117C',
+              black: '#0D0E0C',
+              green: '#34C73B',
+              whatsapp: '#25D366',
+              lightBg: '#F4F4EE',
+              lightCard: '#FAF9F5',
+              darkBg: '#111210',
+              darkCard: '#1A1C18',
+              darkElevated: '#232620',
+              darkBorder: '#2E322B',
+            }
+          },
+          boxShadow: {
+            'brutal': '4px 4px 0px #0D0E0C',
+            'brutal-sm': '3px 3px 0px #0D0E0C',
+            'brutal-xs': '2px 2px 0px #0D0E0C',
+            'brutal-lime': '3px 3px 0px #CCF046',
+            'brutal-dark': '4px 4px 0px #060706',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Física tátil neo-brutalista para botões principais */
+    .btn-brutal {
+      transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.14s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease;
+    }
+    .btn-brutal:hover {
+      transform: translate(-1px, -1px);
+    }
+    .btn-brutal:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #0D0E0C !important;
+    }
+
+    /* Animação suave de entrada para novas peças e transições de etapa */
+    @keyframes popSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .animate-piece-in {
+      animation: popSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Linhas interativas clicáveis/tocáveis no resultado final */
+    .editable-segment {
+      position: relative;
+      display: block;
+      border-radius: 0.65rem;
+      padding: 0.35rem 0.55rem;
+      margin: 0 -0.55rem;
+      transition: background-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+      cursor: pointer;
+    }
+    .editable-segment:hover,
+    .editable-segment:focus-visible {
+      background-color: rgba(204, 240, 70, 0.32);
+      box-shadow: inset 0 0 0 1.5px #0D0E0C;
+      outline: none;
+    }
+    .dark .editable-segment:hover,
+    .dark .editable-segment:focus-visible {
+      background-color: rgba(204, 240, 70, 0.16);
+      box-shadow: inset 0 0 0 1.5px #CCF046;
+    }
+    .editable-segment:active {
+      transform: scale(0.992);
+    }
+
+    /* Scrollbar estilizada */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(13, 14, 12, 0.25);
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: rgba(204, 240, 70, 0.28);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #F51B8E;
+    }
+
+    /* Remove setas nativas nos inputs numéricos */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+
+<body class="relative bg-brand-lightBg text-brand-black dark:bg-brand-darkBg dark:text-[#F4F4EE] min-h-screen transition-colors duration-300 selection:bg-brand-lime selection:text-brand-black overflow-x-hidden">
+
+  <!-- =====================================================================
+       CABEÇALHO OFICIAL ENCANTTO3D (CARBON BLACK + LIME + MAGENTA)
+  ====================================================================== -->
+  <header class="sticky top-0 z-30 bg-brand-black text-white border-b-2 border-brand-lime">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <!-- Logotipo Encantto3D SVG -->
+      <div class="flex items-center gap-3">
+        <svg class="h-10 w-auto shrink-0" viewBox="0 0 210 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Encantto3D">
+          <!-- Formas geométricas maker acima do logo -->
+          <path d="M52 7L57 12M57 7L52 12" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+          <polygon points="73,6 81,13 71,16" fill="#CCF046"/>
+          <circle cx="94" cy="11" r="4" fill="#F51B8E"/>
+          <!-- Tipografia Encantto 3D com engrenagem no lugar do 'o' -->
+          <text x="4" y="42" fill="#FFFFFF" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="25" letter-spacing="-0.5">Encantt</text>
+          <g transform="translate(103, 33)">
+            <circle cx="0" cy="0" r="6.5" stroke="#CCF046" stroke-width="2.6"/>
+            <circle cx="0" cy="0" r="2" fill="#F51B8E"/>
+            <path d="M0 -9.5V-7M0 7V9.5M-9.5 0H-7M7 0H9.5M-6.7 -6.7L-5 -5M5 5L6.7 6.7M6.7 -6.7L5 -5M-5 5L-6.7 6.7" stroke="#CCF046" stroke-width="2.1" stroke-linecap="round"/>
+          </g>
+          <text x="118" y="42" fill="#CCF046" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="25" letter-spacing="-0.5">3D</text>
+        </svg>
+
+        <span class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold text-brand-lime tracking-wide">
+          Proposta Comercial
+        </span>
+      </div>
+
+      <!-- Alternar Tema Claro / Escuro -->
+      <button
+        id="theme-toggle"
+        type="button"
+        aria-label="Alternar tema claro ou escuro"
+        class="h-10 px-3.5 rounded-full bg-white/10 hover:bg-brand-lime hover:text-brand-black text-white border border-white/20 hover:border-brand-black flex items-center gap-2 text-xs font-extrabold transition-colors cursor-pointer"
+      >
+        <svg id="icon-sun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="icon-moon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="theme-label">Modo Escuro</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       CONTEÚDO PRINCIPAL: WIZARD PASSO A PASSO + RESULTADO INTERATIVO
+  ====================================================================== -->
+  <main class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- Barra de Progresso do Passo a Passo -->
+    <div id="wizard-progress-bar" class="mb-6 bg-brand-lightCard dark:bg-brand-darkCard rounded-2xl p-3.5 sm:p-4 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal-sm dark:shadow-brutal-dark">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <span id="step-pill-badge" class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime font-display font-extrabold text-[11px] uppercase tracking-wider">
+            Passo 1 de 5
+          </span>
+          <span id="step-title-indicator" class="font-display font-bold text-xs sm:text-sm text-brand-black dark:text-white">
+            Dados do Atendimento
+          </span>
+        </div>
+
+        <button
+          id="jump-to-result-btn"
+          type="button"
+          class="hidden px-3 py-1 rounded-full bg-brand-lime hover:bg-brand-limeHover text-brand-black border-[1.5px] border-brand-black text-[11px] font-extrabold transition-colors cursor-pointer"
+        >
+          Ver Resultado →
+        </button>
+      </div>
+
+      <!-- Trilho visual de etapas -->
+      <div class="grid grid-cols-5 gap-1.5 sm:gap-2">
+        <div data-progress-seg="0" class="h-2 rounded-full bg-brand-pink border border-brand-black transition-all"></div>
+        <div data-progress-seg="1" class="h-2 rounded-full bg-brand-black/15 dark:bg-white/15 border border-brand-black/30 transition-all"></div>
+        <div data-progress-seg="2" class="h-2 rounded-full bg-brand-black/15 dark:bg-white/15 border border-brand-black/30 transition-all"></div>
+        <div data-progress-seg="3" class="h-2 rounded-full bg-brand-black/15 dark:bg-white/15 border border-brand-black/30 transition-all"></div>
+        <div data-progress-seg="4" class="h-2 rounded-full bg-brand-black/15 dark:bg-white/15 border border-brand-black/30 transition-all"></div>
+      </div>
+    </div>
+
+    <!-- Container Dinâmico da Tela Atual do Passo a Passo -->
+    <div id="wizard-stage"></div>
+
+  </main>
+
+  <!-- =====================================================================
+       POPUP DE EDIÇÃO RÁPIDA (AO TOCAR EM QUALQUER PARTE DO TEXTO FINAL)
+  ====================================================================== -->
+  <div
+    id="quick-edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="quick-edit-title"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-brand-black/70 backdrop-blur-md transition-opacity duration-200"
+  >
+    <div class="w-full max-w-lg rounded-3xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-lime shadow-brutal dark:shadow-brutal-dark p-5 sm:p-6 animate-piece-in">
+      <!-- Cabeçalho do Popup de Edição -->
+      <div class="flex items-center justify-between gap-3 pb-3.5 border-b-2 border-brand-black/10 dark:border-brand-darkBorder">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-brand-lime text-brand-black border-2 border-brand-black shadow-brutal-xs flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div>
+            <span id="quick-edit-badge" class="inline-block px-2 py-0.5 rounded bg-brand-black text-brand-lime text-[10px] font-extrabold uppercase tracking-wider mb-0.5">
+              Edição Rápida
+            </span>
+            <h3 id="quick-edit-title" class="font-display text-lg font-extrabold tracking-tight text-brand-black dark:text-white">
+              Editar Campo
+            </h3>
+          </div>
+        </div>
+
+        <button
+          id="quick-edit-close-btn"
+          type="button"
+          aria-label="Fechar popup"
+          class="w-9 h-9 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-brand-pink hover:text-white text-brand-black dark:text-white border-2 border-brand-black dark:border-brand-darkBorder flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Conteúdo Dinâmico do Campo em Edição -->
+      <div id="quick-edit-body" class="mt-4 space-y-4"></div>
+
+      <!-- Botões de Confirmação do Popup -->
+      <div class="mt-5 pt-4 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex items-center justify-end gap-2.5">
+        <button
+          id="quick-edit-cancel-btn"
+          type="button"
+          class="h-11 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-sm transition-colors cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          id="quick-edit-save-btn"
+          type="button"
+          class="btn-brutal h-11 px-5 rounded-xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm border-2 border-brand-black shadow-brutal-xs flex items-center gap-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Salvar Alteração</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       NOTIFICAÇÃO TOAST FLUTUANTE COM SUPORTE A 'DESFAZER'
+  ====================================================================== -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-300"
+  >
+    <div class="pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-full bg-brand-black text-white border-2 border-brand-lime shadow-brutal text-xs sm:text-sm font-bold">
+      <span class="w-2.5 h-2.5 rounded-full bg-brand-lime shrink-0"></span>
+      <span id="toast-message">Orçamento copiado!</span>
+      <button
+        id="toast-undo-btn"
+        type="button"
+        class="hidden ml-1 px-3 py-0.5 rounded-full bg-brand-pink text-white text-xs font-extrabold hover:bg-brand-pinkHover transition-colors cursor-pointer"
+      >
+        Desfazer
+      </button>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL DE AVISO DE SEGURANÇA (CAMPOS NÃO PREENCHIDOS AO COPIAR)
+  ====================================================================== -->
+  <div
+    id="validation-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="validation-modal-title"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-brand-black/70 backdrop-blur-md transition-opacity duration-200"
+  >
+    <div
+      id="validation-modal-card"
+      class="w-full max-w-md rounded-3xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-lime shadow-brutal dark:shadow-brutal-dark p-5 sm:p-6 animate-piece-in"
+    >
+      <!-- Cabeçalho do Aviso -->
+      <div class="flex items-start gap-3 pb-3.5 border-b-2 border-brand-black/10 dark:border-brand-darkBorder">
+        <div class="w-11 h-11 rounded-2xl bg-brand-pink text-white border-2 border-brand-black shadow-brutal-xs flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <span class="inline-block px-2 py-0.5 rounded bg-brand-lime text-brand-black text-[10px] font-extrabold uppercase tracking-wider mb-1">
+            Aviso de Segurança
+          </span>
+          <h3 id="validation-modal-title" class="font-display text-lg font-extrabold tracking-tight text-brand-black dark:text-white">
+            Dados não preenchidos
+          </h3>
+        </div>
+      </div>
+
+      <!-- Mensagem & Lista de Campos Faltantes -->
+      <div class="mt-3.5">
+        <p class="text-xs sm:text-sm font-semibold text-brand-black/80 dark:text-gray-300 leading-relaxed">
+          Os seguintes dados ainda não foram preenchidos no orçamento. Deseja continuar e copiar mesmo assim?
+        </p>
+
+        <ul
+          id="missing-fields-list"
+          class="mt-3 max-h-52 overflow-y-auto space-y-2 pr-1"
+        ></ul>
+      </div>
+
+      <!-- Botões de Ação: Editar ou Sim, continuar -->
+      <div class="mt-5 pt-4 border-t-2 border-brand-black/10 dark:border-brand-darkBorder grid grid-cols-2 gap-3">
+        <button
+          id="modal-edit-btn"
+          type="button"
+          class="btn-brutal h-11 px-4 rounded-xl bg-brand-lime hover:bg-brand-limeHover text-brand-black font-display font-extrabold text-sm border-2 border-brand-black shadow-brutal-xs flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <span>Editar</span>
+        </button>
+
+        <button
+          id="modal-confirm-copy-btn"
+          type="button"
+          class="btn-brutal h-11 px-4 rounded-xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm border-2 border-brand-black shadow-brutal-xs flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Sim, continuar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       LÓGICA DA APLICAÇÃO (JAVASCRIPT)
+  ====================================================================== -->
+  <script>
+    /**
+     * Gerador de Propostas Comerciais – Encantto3D
+     * Fluxo Passo a Passo com Modelagem como Adição & Edição Interativa por Toque no Resultado Final.
+     */
+    (function () {
+      'use strict';
+
+      const STORAGE_KEYS = {
+        SELLER: 'encantto3d_vendedor_v1',
+        THEME: 'encantto3d_theme_v1'
+      };
+
+      const SELLERS = [
+        'Gabriel Smanioto',
+        'Ana Clara',
+        'Gabriel Quintino',
+        'Layane Martis'
+      ];
+
+      const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'RESINA', 'ASA', 'ALTA ENGENHARIA'];
+      const ENGINEERING_HOURLY_RATE = 100;
+
+      // Etapas do fluxo:
+      // 'atendimento' -> 'piece-modeling-ask' -> 'piece-modeling-type' (se modelada) -> 'piece-details' -> 'piece-painting' -> 'result'
+      let state = {
+        step: 'atendimento',
+        currentPieceIndex: 0,
+        hasVisitedResult: false,
+        clientName: '',
+        sellerName: '',
+        deliveryDays: '7',
+        hasInstallments: false,
+        installmentsCount: '10',
+        pieces: []
+      };
+
+      let lastSnapshotBeforeReset = null;
+      let toastTimer = null;
+      let pieceUidCounter = 1;
+      let firstMissingItem = null;
+      let activeQuickEdit = null;
+
+      // Referências aos elementos fixos do DOM
+      const dom = {
+        wizardProgressBar: document.getElementById('wizard-progress-bar'),
+        stepPillBadge: document.getElementById('step-pill-badge'),
+        stepTitleIndicator: document.getElementById('step-title-indicator'),
+        jumpToResultBtn: document.getElementById('jump-to-result-btn'),
+        progressSegments: document.querySelectorAll('[data-progress-seg]'),
+        wizardStage: document.getElementById('wizard-stage'),
+        themeToggle: document.getElementById('theme-toggle'),
+        iconSun: document.getElementById('icon-sun'),
+        iconMoon: document.getElementById('icon-moon'),
+        themeLabel: document.getElementById('theme-label'),
+        toast: document.getElementById('toast'),
+        toastMessage: document.getElementById('toast-message'),
+        toastUndoBtn: document.getElementById('toast-undo-btn'),
+        validationModal: document.getElementById('validation-modal'),
+        missingFieldsList: document.getElementById('missing-fields-list'),
+        modalEditBtn: document.getElementById('modal-edit-btn'),
+        modalConfirmCopyBtn: document.getElementById('modal-confirm-copy-btn'),
+        quickEditModal: document.getElementById('quick-edit-modal'),
+        quickEditBadge: document.getElementById('quick-edit-badge'),
+        quickEditTitle: document.getElementById('quick-edit-title'),
+        quickEditBody: document.getElementById('quick-edit-body'),
+        quickEditCloseBtn: document.getElementById('quick-edit-close-btn'),
+        quickEditCancelBtn: document.getElementById('quick-edit-cancel-btn'),
+        quickEditSaveBtn: document.getElementById('quick-edit-save-btn')
+      };
+
+      // Cria uma nova peça com modelagem como adição opcional
+      function createDefaultPiece() {
+        return {
+          uid: pieceUidCounter++,
+          hasModeling: false,
+          modelingType: 'ARTISTICA', // 'ARTISTICA' | 'ENGENHARIA'
+          modelingArtisticScope: 'COMPLETA', // 'AJUSTE' | 'COMPLETA'
+          modelingArtisticPriceRaw: '',
+          modelingEngineeringHours: '',
+          modelingNotes: '',
+          name: '',
+          measureMode: 'single', // 'single' | 'triple'
+          singleMeasure: '',
+          dimL: '',
+          dimA: '',
+          dimP: '',
+          quantity: 1,
+          material: 'PLA',
+          printType: 'COLORIDA',
+          priceRaw: '',
+          hasPainting: false,
+          paintDetail: '',
+          paintPriceRaw: ''
+        };
+      }
+
+      function escapeAttr(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function formatPieceMeasure(piece) {
+        if (piece.measureMode === 'triple') {
+          const parts = [piece.dimL, piece.dimA, piece.dimP]
+            .map((v) => String(v || '').trim())
+            .filter(Boolean)
+            .map((v) => (/cm$/i.test(v) ? v : `${v}cm`));
+          return parts.length ? parts.join(' x ') : '[MEDIDA]';
+        }
+
+        const raw = String(piece.singleMeasure || '').trim();
+        if (!raw) return '[MEDIDA]';
+
+        if (/[xX×]/.test(raw)) {
+          const parts = raw
+            .split(/\s*[xX×]\s*/)
+            .map((p) => p.trim())
+            .filter(Boolean)
+            .map((p) => (/cm$/i.test(p) ? p : `${p}cm`));
+          return parts.join(' x ');
+        }
+
+        return /cm$/i.test(raw) ? raw : `${raw}cm`;
+      }
+
+      function parseCurrency(raw) {
+        if (!raw) return 0;
+        const cleaned = String(raw)
+          .replace(/[^\d.,]/g, '')
+          .replace(/\./g, '')
+          .replace(',', '.');
+        const num = parseFloat(cleaned);
+        return Number.isFinite(num) && num >= 0 ? num : 0;
+      }
+
+      function formatBRL(value) {
+        return Number(value || 0).toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      function sanitizeMoneyInput(raw) {
+        return String(raw || '').replace(/[^\d.,]/g, '');
+      }
+
+      function getPieceModelingValue(piece) {
+        if (!piece || !piece.hasModeling) return 0;
+        if (piece.modelingType === 'ARTISTICA') {
+          return parseCurrency(piece.modelingArtisticPriceRaw);
+        }
+        const hours = Math.max(0, parseFloat(String(piece.modelingEngineeringHours || '').replace(',', '.')) || 0);
+        return hours * ENGINEERING_HOURLY_RATE;
+      }
+
+      function getPieceModelingDescription(piece) {
+        if (!piece.hasModeling) return 'NÃO';
+        let desc = '';
+        if (piece.modelingType === 'ARTISTICA') {
+          const scopeLabel = piece.modelingArtisticScope === 'AJUSTE'
+            ? 'APENAS UM AJUSTE'
+            : 'MODELAGEM COMPLETA';
+          desc = `ARTÍSTICA (ORGÂNICA) – ${scopeLabel}`;
+        } else {
+          const hours = Math.max(0, parseFloat(String(piece.modelingEngineeringHours || '').replace(',', '.')) || 0);
+          const hoursStr = String(hours).replace('.', ',');
+          desc = `ENGENHARIA (${hoursStr}h x R$ 100,00/hora)`;
+        }
+        const notes = (piece.modelingNotes || '').trim().toUpperCase();
+        return notes ? `${desc} – ${notes}` : desc;
+      }
+
+      function getCurrentPiece() {
+        if (!state.pieces[state.currentPieceIndex]) {
+          state.currentPieceIndex = Math.max(0, state.pieces.length - 1);
+        }
+        return state.pieces[state.currentPieceIndex];
+      }
+
+      // Calcula os totais financeiros do orçamento
+      function calculateTotals() {
+        let totalPrint = 0;
+        let totalModeling = 0;
+        let totalPainting = 0;
+        let hasAnyModeling = false;
+        let hasAnyPainting = false;
+
+        state.pieces.forEach((piece) => {
+          const printVal = parseCurrency(piece.priceRaw);
+          const modVal = getPieceModelingValue(piece);
+          const paintVal = piece.hasPainting ? parseCurrency(piece.paintPriceRaw) : 0;
+
+          if (piece.hasModeling) hasAnyModeling = true;
+          if (piece.hasPainting) hasAnyPainting = true;
+
+          totalPrint += printVal;
+          totalModeling += modVal;
+          totalPainting += paintVal;
+        });
+
+        const totalGeneral = totalPrint + totalModeling + totalPainting;
+        return {
+          totalPrint,
+          totalModeling,
+          totalPainting,
+          totalGeneral,
+          halfValue: totalGeneral / 2,
+          hasAnyModeling,
+          hasAnyPainting
+        };
+      }
+
+      // Gera o texto puro idêntico ao que será copiado e enviado no WhatsApp
+      function buildPlainQuoteText() {
+        const sectionDivider = '------------------------------';
+        const clientUpper = (state.clientName.trim() || '[NOME DO CLIENTE]').toUpperCase();
+        const sellerUpper = (state.sellerName.trim() || '[NOME DO VENDEDOR]').toUpperCase();
+        const days = Math.max(1, parseInt(state.deliveryDays, 10) || 7);
+        const installments = Math.max(2, parseInt(state.installmentsCount, 10) || 10);
+        const totals = calculateTotals();
+
+        const headerSubtitle = state.pieces.length > 1
+          ? 'IMPRESSÃO 3D – PEÇAS PERSONALIZADAS'
+          : 'IMPRESSÃO 3D – PEÇA PERSONALIZADA';
+
+        const pieceBlocks = state.pieces.map((piece, idx) => {
+          const numStr = String(idx + 1).padStart(2, '0');
+          const pieceNameUpper = (piece.name.trim() || '[NOME DA PEÇA]').toUpperCase();
+          const measureFormatted = formatPieceMeasure(piece);
+          const qty = Math.max(1, parseInt(piece.quantity, 10) || 1);
+          const qtyLabel = qty === 1 ? '1 PEÇA' : `${qty} PEÇAS`;
+          const materialUpper = (piece.material || 'PLA').toUpperCase();
+          const printUpper = (piece.printType || 'COLORIDA').toUpperCase();
+          const modelingText = getPieceModelingDescription(piece);
+
+          let paintingText = 'NÃO';
+          if (piece.hasPainting) {
+            const detail = (piece.paintDetail || '').trim().toUpperCase();
+            paintingText = detail ? `SIM (${detail})` : 'SIM';
+          }
+
+          const printVal = parseCurrency(piece.priceRaw);
+          const modVal = getPieceModelingValue(piece);
+          const paintVal = piece.hasPainting ? parseCurrency(piece.paintPriceRaw) : 0;
+          const pieceSubtotal = printVal + modVal + paintVal;
+          const hasExtras = piece.hasModeling || piece.hasPainting;
+
+          const lines = [
+            `PEÇA ${numStr} – ${pieceNameUpper}`,
+            `- Medida principal: ${measureFormatted}`,
+            `- Quantidade: ${qtyLabel}`,
+            `- Material: ${materialUpper}`,
+            `- Impressão: ${printUpper}`,
+            `- Modelagem: ${modelingText}`,
+            `- Pintura: ${paintingText}`
+          ];
+
+          if (hasExtras) {
+            lines.push(`- Valor Impressão: R$ ${formatBRL(printVal)}`);
+            if (piece.hasModeling) {
+              lines.push(`- Valor Modelagem: R$ ${formatBRL(modVal)}`);
+            }
+            if (piece.hasPainting) {
+              lines.push(`- Valor Pintura: R$ ${formatBRL(paintVal)}`);
+            }
+            lines.push(`- Valor Total da Peça: R$ ${formatBRL(pieceSubtotal)}`);
+          } else {
+            lines.push(`- Valor: R$ ${formatBRL(printVal)}`);
+          }
+
+          return lines.join('\n');
+        });
+
+        const summaryLines = [
+          'RESUMO DO ORÇAMENTO',
+          `IMPRESSÃO: R$ ${formatBRL(totals.totalPrint)}`
+        ];
+        if (totals.hasAnyModeling || totals.totalModeling > 0) {
+          summaryLines.push(`MODELAGEM: R$ ${formatBRL(totals.totalModeling)}`);
+        }
+        if (totals.hasAnyPainting || totals.totalPainting > 0) {
+          summaryLines.push(`PINTURA: R$ ${formatBRL(totals.totalPainting)}`);
+        }
+        summaryLines.push(`TOTAL GERAL: R$ ${formatBRL(totals.totalGeneral)}`);
+        summaryLines.push(`ANTECIPAÇÃO (50%): R$ ${formatBRL(totals.halfValue)}`);
+
+        const paymentSentence = state.hasInstallments
+          ? `O pagamento poderá ser realizado via PIX (CNPJ: 64870514000180) ou cartão de crédito (por link de pagamento). PARA ESTE VALOR, CONSEGUIMOS FAZER EM ATÉ ${installments}X SEM JUROS`
+          : `O pagamento poderá ser realizado via PIX (CNPJ: 64870514000180) ou cartão de crédito (por link de pagamento).`;
+
+        return [
+          `NOME DO CLIENTE: ${clientUpper}\nNOME DO VENDEDOR: ${sellerUpper}`,
+          sectionDivider,
+          `📣 PROPOSTA COMERCIAL – ENCANTTO3D 📣\n\n${headerSubtitle}\n\n${pieceBlocks.join(`\n\n${sectionDivider}\n\n`)}`,
+          sectionDivider,
+          summaryLines.join('\n'),
+          sectionDivider,
+          `PRAZO DE ENTREGA\nPrevisão: ${days} ${days === 1 ? 'dia útil' : 'dias úteis'}, contados após aprovação da proposta e confirmação da antecipação.`,
+          sectionDivider,
+          `⚠️ ATENÇÃO – CONDIÇÕES DE PAGAMENTO\nPara iniciar a fabricação, é necessário o pagamento antecipado de 50% do valor total do pedido (R$ ${formatBRL(totals.halfValue)}).\n${paymentSentence}\nO valor antecipado será integralmente abatido do valor total, restando os outros 50% (R$ ${formatBRL(totals.halfValue)}) para pagamento na entrega do pedido.`,
+          sectionDivider,
+          `ESSE ORÇAMENTO TEM UMA VALIDADE DE 10 (DEZ) DIAS CORRIDOS. APÓS ESSE PRAZO OS VALORES PODEM SOFRER ALTERAÇÕES.\n\nAgradecemos pela preferência e pela confiança na Encantto3D! 💚`
+        ].join('\n\n');
+      }
+
+      // Atualiza a barra de progresso superior conforme a etapa atual
+      function updateProgressBar() {
+        const pieceNum = String(state.currentPieceIndex + 1).padStart(2, '0');
+        let activeSeg = 0;
+        let stepLabel = 'Passo 1 de 5';
+        let titleText = 'Dados do Atendimento';
+
+        if (state.step === 'atendimento') {
+          activeSeg = 0;
+          stepLabel = 'Passo 1 de 5';
+          titleText = 'Dados do Atendimento';
+        } else if (state.step === 'piece-modeling-ask' || state.step === 'piece-modeling-type') {
+          activeSeg = 1;
+          stepLabel = `Passo 2 de 5 • Peça ${pieceNum}`;
+          titleText = state.step === 'piece-modeling-ask'
+            ? 'Modelagem 3D (Adição)'
+            : 'Tipo de Modelagem 3D';
+        } else if (state.step === 'piece-details') {
+          activeSeg = 2;
+          stepLabel = `Passo 3 de 5 • Peça ${pieceNum}`;
+          titleText = 'Dados e Valores da Peça';
+        } else if (state.step === 'piece-painting') {
+          activeSeg = 3;
+          stepLabel = `Passo 4 de 5 • Peça ${pieceNum}`;
+          titleText = 'Pintura da Peça';
+        } else if (state.step === 'result') {
+          activeSeg = 4;
+          stepLabel = 'Passo 5 de 5 • Concluído';
+          titleText = 'Resultado Final & Edição por Toque';
+        }
+
+        dom.stepPillBadge.textContent = stepLabel;
+        dom.stepTitleIndicator.textContent = titleText;
+
+        dom.progressSegments.forEach((seg, idx) => {
+          if (idx < activeSeg) {
+            seg.className = 'h-2 rounded-full bg-brand-lime border border-brand-black transition-all';
+          } else if (idx === activeSeg) {
+            seg.className = 'h-2 rounded-full bg-brand-pink border border-brand-black transition-all';
+          } else {
+            seg.className = 'h-2 rounded-full bg-brand-black/15 dark:bg-white/15 border border-brand-black/30 transition-all';
+          }
+        });
+
+        if (state.hasVisitedResult && state.step !== 'result') {
+          dom.jumpToResultBtn.classList.remove('hidden');
+        } else {
+          dom.jumpToResultBtn.classList.add('hidden');
+        }
+      }
+
+      // Renderiza a tela correspondente à etapa atual do passo a passo
+      function renderWizard() {
+        updateProgressBar();
+
+        if (state.step === 'atendimento') {
+          renderStepAtendimento();
+        } else if (state.step === 'piece-modeling-ask') {
+          renderStepModelingAsk();
+        } else if (state.step === 'piece-modeling-type') {
+          renderStepModelingType();
+        } else if (state.step === 'piece-details') {
+          renderStepPieceDetails();
+        } else if (state.step === 'piece-painting') {
+          renderStepPiecePainting();
+        } else if (state.step === 'result') {
+          state.hasVisitedResult = true;
+          updateProgressBar();
+          renderStepResult();
+        }
+      }
+
+      // =====================================================================
+      // TELA 1: DADOS DO ATENDIMENTO
+      // =====================================================================
+      function renderStepAtendimento() {
+        const sellerOptions = SELLERS.map(
+          (s) => `<option value="${escapeAttr(s)}" ${state.sellerName === s ? 'selected' : ''}>${escapeAttr(s)}</option>`
+        ).join('');
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-6 sm:p-8 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+              <div>
+                <span class="inline-block px-2.5 py-0.5 rounded-full bg-brand-lime text-brand-black border border-brand-black text-[11px] font-extrabold uppercase tracking-wider mb-1.5">
+                  Etapa 01 • Início
+                </span>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-black dark:text-white">
+                  Quem estamos atendendo?
+                </h2>
+              </div>
+            </div>
+
+            <div class="space-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="wiz-client-name" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                    Nome do Cliente
+                  </label>
+                  <input
+                    id="wiz-client-name"
+                    type="text"
+                    value="${escapeAttr(state.clientName)}"
+                    placeholder="Ex: Karolayne"
+                    autocomplete="off"
+                    class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label for="wiz-seller-name" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                    Nome do Vendedor
+                  </label>
+                  <div class="relative">
+                    <select
+                      id="wiz-seller-name"
+                      class="w-full h-12 px-4 pr-10 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white appearance-none focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime transition-all cursor-pointer"
+                    >
+                      <option value="" ${!state.sellerName ? 'selected' : ''}>Selecionar</option>
+                      ${sellerOptions}
+                    </select>
+                    <svg class="w-4 h-4 text-brand-black dark:text-brand-lime pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Configurações de Prazo e Parcelamento -->
+              <div class="pt-4 border-t-2 border-dashed border-brand-black/15 dark:border-brand-darkBorder grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="wiz-delivery-days" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                    Prazo de Entrega (dias úteis)
+                  </label>
+                  <div class="relative flex items-center">
+                    <input
+                      id="wiz-delivery-days"
+                      type="number"
+                      min="1"
+                      max="365"
+                      value="${escapeAttr(state.deliveryDays)}"
+                      class="w-full h-11 pl-3.5 pr-24 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-bold text-brand-black dark:text-white tabular-nums focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                    />
+                    <span class="absolute right-3 text-xs font-bold text-gray-500 dark:text-gray-400 pointer-events-none">
+                      dias úteis
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                    Parcelamento sem juros
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <div class="grid grid-cols-2 gap-1.5 shrink-0">
+                      <button
+                        id="wiz-inst-no"
+                        type="button"
+                        class="h-11 px-3 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                          !state.hasInstallments
+                            ? 'bg-brand-black text-brand-lime shadow-brutal-xs'
+                            : 'bg-white dark:bg-brand-darkElevated text-brand-black/80 dark:text-gray-300'
+                        }"
+                      >
+                        NÃO
+                      </button>
+                      <button
+                        id="wiz-inst-yes"
+                        type="button"
+                        class="h-11 px-3 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                          state.hasInstallments
+                            ? 'bg-brand-black text-brand-lime shadow-brutal-xs'
+                            : 'bg-white dark:bg-brand-darkElevated text-brand-black/80 dark:text-gray-300'
+                        }"
+                      >
+                        SIM
+                      </button>
+                    </div>
+
+                    <div id="wiz-inst-wrap" class="${state.hasInstallments ? 'flex' : 'hidden'} relative flex-1 items-center">
+                      <input
+                        id="wiz-inst-count"
+                        type="number"
+                        min="2"
+                        max="24"
+                        value="${escapeAttr(state.installmentsCount)}"
+                        class="w-full h-11 pl-3 pr-24 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-bold text-brand-black dark:text-white tabular-nums focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                      />
+                      <span class="absolute right-2.5 text-[11px] font-bold text-brand-pink dark:text-brand-lime pointer-events-none">
+                        x sem juros
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botão Confirmar -->
+            <div class="mt-7 pt-5 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex justify-end">
+              <button
+                id="wiz-next-atendimento"
+                type="button"
+                class="btn-brutal w-full sm:w-auto h-12 px-7 rounded-2xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-base tracking-wide border-2 border-brand-black shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Confirmar e Configurar Peça 01</span>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </button>
+            </div>
+          </section>
+        `;
+
+        const clientInput = document.getElementById('wiz-client-name');
+        const sellerSelect = document.getElementById('wiz-seller-name');
+        const daysInput = document.getElementById('wiz-delivery-days');
+        const instNoBtn = document.getElementById('wiz-inst-no');
+        const instYesBtn = document.getElementById('wiz-inst-yes');
+        const instWrap = document.getElementById('wiz-inst-wrap');
+        const instCountInput = document.getElementById('wiz-inst-count');
+
+        clientInput.addEventListener('input', (e) => {
+          state.clientName = e.target.value;
+        });
+
+        sellerSelect.addEventListener('change', (e) => {
+          state.sellerName = e.target.value;
+          try {
+            if (state.sellerName) {
+              localStorage.setItem(STORAGE_KEYS.SELLER, state.sellerName);
+            } else {
+              localStorage.removeItem(STORAGE_KEYS.SELLER);
+            }
+          } catch (err) {}
+        });
+
+        daysInput.addEventListener('input', (e) => {
+          state.deliveryDays = e.target.value;
+        });
+
+        instNoBtn.addEventListener('click', () => {
+          state.hasInstallments = false;
+          renderStepAtendimento();
+        });
+
+        instYesBtn.addEventListener('click', () => {
+          state.hasInstallments = true;
+          renderStepAtendimento();
+          const inp = document.getElementById('wiz-inst-count');
+          if (inp) inp.focus();
+        });
+
+        instCountInput.addEventListener('input', (e) => {
+          state.installmentsCount = e.target.value;
+        });
+
+        document.getElementById('wiz-next-atendimento').addEventListener('click', () => {
+          state.currentPieceIndex = 0;
+          state.step = 'piece-modeling-ask';
+          renderWizard();
+        });
+
+        clientInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('wiz-next-atendimento').click();
+          }
+        });
+      }
+
+      // =====================================================================
+      // TELA 2: PERGUNTA SE A PEÇA PRECISARÁ SER MODELADA (ADIÇÃO)
+      // =====================================================================
+      function renderStepModelingAsk() {
+        const piece = getCurrentPiece();
+        const numStr = String(state.currentPieceIndex + 1).padStart(2, '0');
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-6 sm:p-8 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in">
+            <div class="mb-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime font-display font-extrabold text-xs">
+                  PEÇA ${numStr}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-lime text-brand-black border border-brand-black text-[11px] font-extrabold uppercase">
+                  Adição de Modelagem 3D
+                </span>
+              </div>
+              <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-black dark:text-white">
+                A PEÇA ${numStr} precisará ser modelada?
+              </h2>
+              <p class="mt-1.5 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                Selecione abaixo se o cliente já possui o arquivo pronto ou se será necessário criar/ajustar o modelo 3D.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Opção NÃO -->
+              <button
+                id="wiz-modeling-no"
+                type="button"
+                class="btn-brutal text-left p-5 sm:p-6 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder bg-white dark:bg-brand-darkElevated hover:bg-brand-lime/30 transition-all cursor-pointer group"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-11 h-11 rounded-2xl bg-brand-black text-brand-lime font-display font-extrabold text-base flex items-center justify-center border border-brand-black">
+                    NÃO
+                  </span>
+                  <span class="text-xs font-extrabold uppercase text-gray-400 group-hover:text-brand-black dark:group-hover:text-brand-lime">
+                    Pular modelagem →
+                  </span>
+                </div>
+                <h3 class="font-display text-lg font-extrabold text-brand-black dark:text-white">
+                  Não precisa de modelagem
+                </h3>
+                <p class="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  O arquivo 3D já está pronto para fatiamento e impressão.
+                </p>
+              </button>
+
+              <!-- Opção SIM -->
+              <button
+                id="wiz-modeling-yes"
+                type="button"
+                class="btn-brutal text-left p-5 sm:p-6 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder bg-brand-lime text-brand-black shadow-brutal-sm transition-all cursor-pointer group"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-11 h-11 rounded-2xl bg-brand-pink text-white font-display font-extrabold text-base flex items-center justify-center border-2 border-brand-black">
+                    SIM
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime text-[10px] font-extrabold uppercase">
+                    + Adição 3D
+                  </span>
+                </div>
+                <h3 class="font-display text-lg font-extrabold text-brand-black">
+                  Sim, precisará ser modelada
+                </h3>
+                <p class="mt-1 text-xs font-bold text-brand-black/80">
+                  Escolher entre Modelagem Artística (Orgânica) ou Engenharia (R$ 100/h).
+                </p>
+              </button>
+            </div>
+
+            <div class="mt-7 pt-5 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex items-center justify-between">
+              <button
+                id="wiz-back-modeling-ask"
+                type="button"
+                class="h-11 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-sm transition-colors cursor-pointer"
+              >
+                ← Voltar
+              </button>
+            </div>
+          </section>
+        `;
+
+        document.getElementById('wiz-modeling-no').addEventListener('click', () => {
+          piece.hasModeling = false;
+          state.step = 'piece-details';
+          renderWizard();
+        });
+
+        document.getElementById('wiz-modeling-yes').addEventListener('click', () => {
+          piece.hasModeling = true;
+          state.step = 'piece-modeling-type';
+          renderWizard();
+        });
+
+        document.getElementById('wiz-back-modeling-ask').addEventListener('click', () => {
+          if (state.currentPieceIndex > 0) {
+            state.currentPieceIndex -= 1;
+            state.step = 'piece-painting';
+          } else {
+            state.step = 'atendimento';
+          }
+          renderWizard();
+        });
+      }
+
+      // =====================================================================
+      // TELA 3: TIPO DE MODELAGEM (ARTÍSTICA OU ENGENHARIA)
+      // =====================================================================
+      function renderStepModelingType() {
+        const piece = getCurrentPiece();
+        const numStr = String(state.currentPieceIndex + 1).padStart(2, '0');
+        const isArtistic = piece.modelingType === 'ARTISTICA';
+        const engHours = Math.max(0, parseFloat(String(piece.modelingEngineeringHours || '').replace(',', '.')) || 0);
+        const engTotal = engHours * ENGINEERING_HOURLY_RATE;
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-6 sm:p-8 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in space-y-6">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime font-display font-extrabold text-xs">
+                  PEÇA ${numStr}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-pink text-white border border-brand-black text-[11px] font-extrabold uppercase">
+                  Modelagem 3D
+                </span>
+              </div>
+              <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-black dark:text-white">
+                Qual será o tipo de modelagem?
+              </h2>
+            </div>
+
+            <!-- Seleção Artística vs Engenharia -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <button
+                id="wiz-mod-artistic"
+                type="button"
+                class="text-left p-4 sm:p-5 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                  isArtistic
+                    ? 'bg-brand-lime text-brand-black shadow-brutal-sm'
+                    : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white hover:bg-brand-lime/25'
+                }"
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="font-display font-extrabold text-base">Artística (Orgânica)</span>
+                  <span class="px-2 py-0.5 rounded bg-brand-black text-brand-lime text-[10px] font-extrabold">
+                    VALOR MANUAL
+                  </span>
+                </div>
+                <p class="text-xs font-semibold opacity-85">
+                  Esculturas, personagens, bustos, ajustes orgânicos e peças decorativas.
+                </p>
+              </button>
+
+              <button
+                id="wiz-mod-engineering"
+                type="button"
+                class="text-left p-4 sm:p-5 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                  !isArtistic
+                    ? 'bg-brand-lime text-brand-black shadow-brutal-sm'
+                    : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white hover:bg-brand-lime/25'
+                }"
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="font-display font-extrabold text-base">Engenharia</span>
+                  <span class="px-2 py-0.5 rounded bg-brand-pink text-white text-[10px] font-extrabold">
+                    R$ 100/HORA
+                  </span>
+                </div>
+                <p class="text-xs font-semibold opacity-85">
+                  Peças técnicas, encaixes mecânicos e CAD calculados automaticamente por hora.
+                </p>
+              </button>
+            </div>
+
+            <!-- Campos específicos da modalidade escolhida -->
+            ${
+              isArtistic
+                ? `
+                  <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder">
+                    <div>
+                      <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-2">
+                        Modalidade da Modelagem Artística
+                      </label>
+                      <div class="grid grid-cols-2 gap-2.5">
+                        <button
+                          id="wiz-mod-scope-adj"
+                          type="button"
+                          class="h-11 px-3 rounded-xl text-xs sm:text-sm font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                            piece.modelingArtisticScope === 'AJUSTE'
+                              ? 'bg-brand-pink text-white shadow-brutal-xs'
+                              : 'bg-brand-lightCard dark:bg-brand-darkCard text-brand-black/80 dark:text-gray-300'
+                          }"
+                        >
+                          Apenas um ajuste
+                        </button>
+                        <button
+                          id="wiz-mod-scope-comp"
+                          type="button"
+                          class="h-11 px-3 rounded-xl text-xs sm:text-sm font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                            piece.modelingArtisticScope === 'COMPLETA'
+                              ? 'bg-brand-pink text-white shadow-brutal-xs'
+                              : 'bg-brand-lightCard dark:bg-brand-darkCard text-brand-black/80 dark:text-gray-300'
+                          }"
+                        >
+                          Modelagem completa
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="wiz-mod-art-price" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                        Valor da Modelagem Artística (R$)
+                      </label>
+                      <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-500 pointer-events-none">R$</span>
+                        <input
+                          id="wiz-mod-art-price"
+                          type="text"
+                          inputmode="decimal"
+                          value="${escapeAttr(piece.modelingArtisticPriceRaw)}"
+                          placeholder="Ex: 120,00"
+                          class="w-full h-12 pl-10 pr-4 rounded-xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                `
+                : `
+                  <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                      <div>
+                        <label for="wiz-mod-eng-hours" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                          Horas de Modelagem
+                        </label>
+                        <div class="relative">
+                          <input
+                            id="wiz-mod-eng-hours"
+                            type="number"
+                            min="0.5"
+                            step="0.5"
+                            value="${escapeAttr(piece.modelingEngineeringHours)}"
+                            placeholder="Ex: 2"
+                            class="w-full h-12 pl-4 pr-16 rounded-xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                          />
+                          <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">
+                            horas
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="rounded-xl bg-brand-black text-white px-4 py-3 border-2 border-brand-black flex items-center justify-between">
+                        <div>
+                          <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Valor Automático (R$ 100/h)
+                          </span>
+                          <span id="wiz-mod-eng-total" class="font-display text-xl font-extrabold text-brand-lime tabular-nums">
+                            R$ ${formatBRL(engTotal)}
+                          </span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-brand-pink text-white text-[10px] font-extrabold">
+                          AUTO
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                `
+            }
+
+            <!-- Detalhes opcionais da modelagem -->
+            <div>
+              <label for="wiz-mod-notes" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                Observação / Detalhe da Modelagem (Opcional)
+              </label>
+              <input
+                id="wiz-mod-notes"
+                type="text"
+                value="${escapeAttr(piece.modelingNotes)}"
+                placeholder="Ex: Baseado em fotos de referência / desenho técnico"
+                class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+              />
+            </div>
+
+            <!-- Navegação -->
+            <div class="pt-4 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex items-center justify-between gap-3">
+              <button
+                id="wiz-back-mod-type"
+                type="button"
+                class="h-11 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-sm transition-colors cursor-pointer"
+              >
+                ← Voltar
+              </button>
+
+              <button
+                id="wiz-next-mod-type"
+                type="button"
+                class="btn-brutal h-12 px-6 rounded-2xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm sm:text-base border-2 border-brand-black shadow-brutal flex items-center gap-2 cursor-pointer"
+              >
+                <span>Confirmar Modelagem →</span>
+              </button>
+            </div>
+          </section>
+        `;
+
+        document.getElementById('wiz-mod-artistic').addEventListener('click', () => {
+          piece.modelingType = 'ARTISTICA';
+          renderStepModelingType();
+        });
+
+        document.getElementById('wiz-mod-engineering').addEventListener('click', () => {
+          piece.modelingType = 'ENGENHARIA';
+          renderStepModelingType();
+          const inp = document.getElementById('wiz-mod-eng-hours');
+          if (inp) inp.focus();
+        });
+
+        if (isArtistic) {
+          document.getElementById('wiz-mod-scope-adj').addEventListener('click', () => {
+            piece.modelingArtisticScope = 'AJUSTE';
+            renderStepModelingType();
+          });
+          document.getElementById('wiz-mod-scope-comp').addEventListener('click', () => {
+            piece.modelingArtisticScope = 'COMPLETA';
+            renderStepModelingType();
+          });
+          const artPriceInput = document.getElementById('wiz-mod-art-price');
+          artPriceInput.addEventListener('input', (e) => {
+            const cleaned = sanitizeMoneyInput(e.target.value);
+            if (cleaned !== e.target.value) e.target.value = cleaned;
+            piece.modelingArtisticPriceRaw = cleaned;
+          });
+        } else {
+          const engHoursInput = document.getElementById('wiz-mod-eng-hours');
+          engHoursInput.addEventListener('input', (e) => {
+            piece.modelingEngineeringHours = e.target.value;
+            const h = Math.max(0, parseFloat(String(e.target.value || '').replace(',', '.')) || 0);
+            document.getElementById('wiz-mod-eng-total').textContent = `R$ ${formatBRL(h * ENGINEERING_HOURLY_RATE)}`;
+          });
+        }
+
+        document.getElementById('wiz-mod-notes').addEventListener('input', (e) => {
+          piece.modelingNotes = e.target.value;
+        });
+
+        document.getElementById('wiz-back-mod-type').addEventListener('click', () => {
+          state.step = 'piece-modeling-ask';
+          renderWizard();
+        });
+
+        document.getElementById('wiz-next-mod-type').addEventListener('click', () => {
+          state.step = 'piece-details';
+          renderWizard();
+        });
+      }
+
+      // =====================================================================
+      // TELA 4: DADOS E VALORES DA PEÇA (IMPRESSÃO 3D)
+      // =====================================================================
+      function renderStepPieceDetails() {
+        const piece = getCurrentPiece();
+        const numStr = String(state.currentPieceIndex + 1).padStart(2, '0');
+
+        const materialButtons = MATERIALS.map((mat) => {
+          const active = piece.material === mat;
+          return `
+            <button
+              type="button"
+              data-mat="${mat}"
+              class="px-3 py-2 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                active
+                  ? 'bg-brand-lime text-brand-black shadow-brutal-xs -translate-y-0.5'
+                  : 'bg-white dark:bg-brand-darkElevated text-brand-black/80 dark:text-gray-300 hover:bg-brand-lime/30'
+              }"
+            >
+              ${mat}
+            </button>
+          `;
+        }).join('');
+
+        let materialHint = '';
+        if (piece.material === 'ALTA ENGENHARIA') {
+          materialHint = `
+            <p class="mt-2 px-3 py-1.5 rounded-xl bg-brand-black text-brand-lime text-[11px] font-bold">
+              ⚙️ Alta Engenharia: materiais mais sofisticados e rígidos para alta exigência mecânica e térmica.
+            </p>
+          `;
+        } else if (piece.material === 'ASA') {
+          materialHint = `
+            <p class="mt-2 px-3 py-1.5 rounded-xl bg-brand-lime/35 dark:bg-brand-lime/15 text-brand-black dark:text-brand-lime text-[11px] font-bold">
+              ☀️ ASA: alta resistência mecânica, térmica e aos raios UV (ideal para uso externo).
+            </p>
+          `;
+        }
+
+        const measureInputs = piece.measureMode === 'single'
+          ? `
+            <div class="relative">
+              <input
+                id="wiz-single-measure"
+                type="text"
+                value="${escapeAttr(piece.singleMeasure)}"
+                placeholder="Ex: 20 ou 10 x 10 x 10"
+                class="w-full h-11 px-3.5 pr-12 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+              />
+              <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-400 pointer-events-none">cm</span>
+            </div>
+          `
+          : `
+            <div class="grid grid-cols-3 gap-2">
+              <div class="relative">
+                <input id="wiz-dim-l" type="text" value="${escapeAttr(piece.dimL)}" placeholder="L" class="w-full h-11 px-2.5 pr-7 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">cm</span>
+              </div>
+              <div class="relative">
+                <input id="wiz-dim-a" type="text" value="${escapeAttr(piece.dimA)}" placeholder="A" class="w-full h-11 px-2.5 pr-7 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">cm</span>
+              </div>
+              <div class="relative">
+                <input id="wiz-dim-p" type="text" value="${escapeAttr(piece.dimP)}" placeholder="P" class="w-full h-11 px-2.5 pr-7 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">cm</span>
+              </div>
+            </div>
+          `;
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-6 sm:p-8 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime font-display font-extrabold text-xs">
+                    PEÇA ${numStr}
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-brand-lime text-brand-black border border-brand-black text-[11px] font-extrabold uppercase">
+                    Dados &amp; Valores da Peça
+                  </span>
+                </div>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-black dark:text-white">
+                  Detalhes da Impressão 3D
+                </h2>
+              </div>
+            </div>
+
+            <!-- Nome da Peça -->
+            <div>
+              <label for="wiz-piece-name" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                Nome da Peça
+              </label>
+              <input
+                id="wiz-piece-name"
+                type="text"
+                value="${escapeAttr(piece.name)}"
+                placeholder="Ex: Plaquinha de nome para mesa"
+                class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+              />
+            </div>
+
+            <!-- Medida + Quantidade -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+              <div class="sm:col-span-8">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300">
+                    Medida Principal (cm)
+                  </label>
+                  <button
+                    id="wiz-toggle-measure"
+                    type="button"
+                    class="text-[11px] font-extrabold text-brand-pink dark:text-brand-lime hover:underline cursor-pointer"
+                  >
+                    ${piece.measureMode === 'single' ? 'Usar 3 medidas (L × A × P)' : 'Usar medida única'}
+                  </button>
+                </div>
+                ${measureInputs}
+              </div>
+
+              <div class="sm:col-span-4">
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                  Quantidade
+                </label>
+                <div class="flex items-center h-11 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder overflow-hidden">
+                  <button id="wiz-qty-dec" type="button" class="w-10 h-full flex items-center justify-center font-extrabold text-base hover:bg-brand-lime/50 text-brand-black dark:text-white cursor-pointer">−</button>
+                  <input id="wiz-qty-input" type="number" min="1" value="${piece.quantity}" class="w-full h-full text-center bg-transparent text-sm font-extrabold text-brand-black dark:text-white tabular-nums focus:outline-none" />
+                  <button id="wiz-qty-inc" type="button" class="w-10 h-full flex items-center justify-center font-extrabold text-base hover:bg-brand-lime/50 text-brand-black dark:text-white cursor-pointer">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Material -->
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                Material
+              </label>
+              <div id="wiz-materials-wrap" class="flex flex-wrap gap-2">
+                ${materialButtons}
+              </div>
+              ${materialHint}
+            </div>
+
+            <!-- Impressão + Valor da Impressão -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                  Impressão
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    id="wiz-print-color"
+                    type="button"
+                    class="h-11 px-3 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                      piece.printType === 'COLORIDA'
+                        ? 'bg-brand-pink text-white shadow-brutal-xs'
+                        : 'bg-white dark:bg-brand-darkElevated text-brand-black/80 dark:text-gray-300'
+                    }"
+                  >
+                    COLORIDA
+                  </button>
+                  <button
+                    id="wiz-print-mono"
+                    type="button"
+                    class="h-11 px-3 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder transition-all cursor-pointer ${
+                      piece.printType === 'MONOCROMÁTICA'
+                        ? 'bg-brand-pink text-white shadow-brutal-xs'
+                        : 'bg-white dark:bg-brand-darkElevated text-brand-black/80 dark:text-gray-300'
+                    }"
+                  >
+                    1 COR (MONO)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label for="wiz-print-price" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                  Valor da Impressão (R$)
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-500 pointer-events-none">R$</span>
+                  <input
+                    id="wiz-print-price"
+                    type="text"
+                    inputmode="decimal"
+                    value="${escapeAttr(piece.priceRaw)}"
+                    placeholder="59,90"
+                    class="w-full h-11 pl-10 pr-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Navegação -->
+            <div class="pt-4 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex items-center justify-between gap-3">
+              <button
+                id="wiz-back-details"
+                type="button"
+                class="h-11 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-sm transition-colors cursor-pointer"
+              >
+                ← Voltar
+              </button>
+
+              <button
+                id="wiz-next-details"
+                type="button"
+                class="btn-brutal h-12 px-6 rounded-2xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm sm:text-base border-2 border-brand-black shadow-brutal flex items-center gap-2 cursor-pointer"
+              >
+                <span>Confirmar Dados da Peça →</span>
+              </button>
+            </div>
+          </section>
+        `;
+
+        document.getElementById('wiz-piece-name').addEventListener('input', (e) => {
+          piece.name = e.target.value;
+        });
+
+        document.getElementById('wiz-toggle-measure').addEventListener('click', () => {
+          piece.measureMode = piece.measureMode === 'single' ? 'triple' : 'single';
+          renderStepPieceDetails();
+        });
+
+        if (piece.measureMode === 'single') {
+          document.getElementById('wiz-single-measure').addEventListener('input', (e) => {
+            piece.singleMeasure = e.target.value;
+          });
+        } else {
+          document.getElementById('wiz-dim-l').addEventListener('input', (e) => { piece.dimL = e.target.value; });
+          document.getElementById('wiz-dim-a').addEventListener('input', (e) => { piece.dimA = e.target.value; });
+          document.getElementById('wiz-dim-p').addEventListener('input', (e) => { piece.dimP = e.target.value; });
+        }
+
+        document.getElementById('wiz-qty-dec').addEventListener('click', () => {
+          piece.quantity = Math.max(1, (parseInt(piece.quantity, 10) || 1) - 1);
+          renderStepPieceDetails();
+        });
+
+        document.getElementById('wiz-qty-inc').addEventListener('click', () => {
+          piece.quantity = (parseInt(piece.quantity, 10) || 1) + 1;
+          renderStepPieceDetails();
+        });
+
+        document.getElementById('wiz-qty-input').addEventListener('input', (e) => {
+          piece.quantity = Math.max(1, parseInt(e.target.value, 10) || 1);
+        });
+
+        document.getElementById('wiz-materials-wrap').addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-mat]');
+          if (!btn) return;
+          piece.material = btn.dataset.mat;
+          renderStepPieceDetails();
+        });
+
+        document.getElementById('wiz-print-color').addEventListener('click', () => {
+          piece.printType = 'COLORIDA';
+          renderStepPieceDetails();
+        });
+
+        document.getElementById('wiz-print-mono').addEventListener('click', () => {
+          piece.printType = 'MONOCROMÁTICA';
+          renderStepPieceDetails();
+        });
+
+        const priceInput = document.getElementById('wiz-print-price');
+        priceInput.addEventListener('input', (e) => {
+          const cleaned = sanitizeMoneyInput(e.target.value);
+          if (cleaned !== e.target.value) e.target.value = cleaned;
+          piece.priceRaw = cleaned;
+        });
+
+        document.getElementById('wiz-back-details').addEventListener('click', () => {
+          state.step = piece.hasModeling ? 'piece-modeling-type' : 'piece-modeling-ask';
+          renderWizard();
+        });
+
+        document.getElementById('wiz-next-details').addEventListener('click', () => {
+          state.step = 'piece-painting';
+          renderWizard();
+        });
+      }
+
+      // =====================================================================
+      // TELA 5: PINTURA DA PEÇA
+      // =====================================================================
+      function renderStepPiecePainting() {
+        const piece = getCurrentPiece();
+        const numStr = String(state.currentPieceIndex + 1).padStart(2, '0');
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-6 sm:p-8 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in space-y-6">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-black text-brand-lime font-display font-extrabold text-xs">
+                  PEÇA ${numStr}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full bg-brand-pink text-white border border-brand-black text-[11px] font-extrabold uppercase">
+                  Acabamento &amp; Pintura
+                </span>
+              </div>
+              <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-brand-black dark:text-white">
+                A PEÇA ${numStr} vai precisar de pintura?
+              </h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3.5">
+              <button
+                id="wiz-paint-no"
+                type="button"
+                class="p-4 sm:p-5 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder text-left transition-all cursor-pointer ${
+                  !piece.hasPainting
+                    ? 'bg-brand-black text-brand-lime shadow-brutal-sm'
+                    : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white hover:bg-brand-lime/25'
+                }"
+              >
+                <span class="block font-display text-lg font-extrabold">NÃO</span>
+                <span class="block text-xs font-semibold opacity-80 mt-0.5">Sem pintura adicional</span>
+              </button>
+
+              <button
+                id="wiz-paint-yes"
+                type="button"
+                class="p-4 sm:p-5 rounded-2xl border-2 border-brand-black dark:border-brand-darkBorder text-left transition-all cursor-pointer ${
+                  piece.hasPainting
+                    ? 'bg-brand-lime text-brand-black shadow-brutal-sm'
+                    : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white hover:bg-brand-lime/25'
+                }"
+              >
+                <span class="block font-display text-lg font-extrabold">SIM</span>
+                <span class="block text-xs font-semibold opacity-85 mt-0.5">Com pintura personalizada</span>
+              </button>
+            </div>
+
+            ${
+              piece.hasPainting
+                ? `
+                  <div class="space-y-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder animate-piece-in">
+                    <div>
+                      <label for="wiz-paint-price" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                        Valor da Pintura (R$)
+                      </label>
+                      <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-500 pointer-events-none">R$</span>
+                        <input
+                          id="wiz-paint-price"
+                          type="text"
+                          inputmode="decimal"
+                          value="${escapeAttr(piece.paintPriceRaw)}"
+                          placeholder="Ex: 25,00"
+                          class="w-full h-12 pl-10 pr-4 rounded-xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="wiz-paint-detail" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">
+                        Detalhe da Pintura (Opcional)
+                      </label>
+                      <input
+                        id="wiz-paint-detail"
+                        type="text"
+                        value="${escapeAttr(piece.paintDetail)}"
+                        placeholder="Ex: Acabamento fosco / verniz automotivo"
+                        class="w-full h-11 px-3.5 rounded-xl bg-brand-lightCard dark:bg-brand-darkCard border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime"
+                      />
+                    </div>
+                  </div>
+                `
+                : ''
+            }
+
+            <div class="pt-4 border-t-2 border-brand-black/10 dark:border-brand-darkBorder flex items-center justify-between gap-3">
+              <button
+                id="wiz-back-painting"
+                type="button"
+                class="h-11 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-sm transition-colors cursor-pointer"
+              >
+                ← Voltar
+              </button>
+
+              <button
+                id="wiz-finish-painting"
+                type="button"
+                class="btn-brutal h-12 px-6 rounded-2xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm sm:text-base border-2 border-brand-black shadow-brutal flex items-center gap-2 cursor-pointer"
+              >
+                <span>Ver Resultado do Orçamento ✓</span>
+              </button>
+            </div>
+          </section>
+        `;
+
+        document.getElementById('wiz-paint-no').addEventListener('click', () => {
+          piece.hasPainting = false;
+          renderStepPiecePainting();
+        });
+
+        document.getElementById('wiz-paint-yes').addEventListener('click', () => {
+          piece.hasPainting = true;
+          renderStepPiecePainting();
+          const inp = document.getElementById('wiz-paint-price');
+          if (inp) inp.focus();
+        });
+
+        if (piece.hasPainting) {
+          const paintPriceInp = document.getElementById('wiz-paint-price');
+          paintPriceInp.addEventListener('input', (e) => {
+            const cleaned = sanitizeMoneyInput(e.target.value);
+            if (cleaned !== e.target.value) e.target.value = cleaned;
+            piece.paintPriceRaw = cleaned;
+          });
+          document.getElementById('wiz-paint-detail').addEventListener('input', (e) => {
+            piece.paintDetail = e.target.value;
+          });
+        }
+
+        document.getElementById('wiz-back-painting').addEventListener('click', () => {
+          state.step = 'piece-details';
+          renderWizard();
+        });
+
+        document.getElementById('wiz-finish-painting').addEventListener('click', () => {
+          state.step = 'result';
+          renderWizard();
+        });
+      }
+
+      // =====================================================================
+      // TELA FINAL: RESULTADO INTERATIVO (TOQUE PARA EDITAR QUALQUER CAMPO)
+      // =====================================================================
+      function renderStepResult() {
+        const totals = calculateTotals();
+        const clientUpper = (state.clientName.trim() || '[NOME DO CLIENTE]').toUpperCase();
+        const sellerUpper = (state.sellerName.trim() || '[NOME DO VENDEDOR]').toUpperCase();
+        const days = Math.max(1, parseInt(state.deliveryDays, 10) || 7);
+        const installments = Math.max(2, parseInt(state.installmentsCount, 10) || 10);
+
+        const headerSubtitle = state.pieces.length > 1
+          ? 'IMPRESSÃO 3D – PEÇAS PERSONALIZADAS'
+          : 'IMPRESSÃO 3D – PEÇA PERSONALIZADA';
+
+        const interactivePiecesHtml = state.pieces.map((piece, idx) => {
+          const numStr = String(idx + 1).padStart(2, '0');
+          const pieceNameUpper = (piece.name.trim() || '[NOME DA PEÇA]').toUpperCase();
+          const measureFormatted = formatPieceMeasure(piece);
+          const qty = Math.max(1, parseInt(piece.quantity, 10) || 1);
+          const qtyLabel = qty === 1 ? '1 PEÇA' : `${qty} PEÇAS`;
+          const materialUpper = (piece.material || 'PLA').toUpperCase();
+          const printUpper = (piece.printType || 'COLORIDA').toUpperCase();
+          const modelingText = getPieceModelingDescription(piece);
+
+          let paintingText = 'NÃO';
+          if (piece.hasPainting) {
+            const detail = (piece.paintDetail || '').trim().toUpperCase();
+            paintingText = detail ? `SIM (${detail})` : 'SIM';
+          }
+
+          const printVal = parseCurrency(piece.priceRaw);
+          const modVal = getPieceModelingValue(piece);
+          const paintVal = piece.hasPainting ? parseCurrency(piece.paintPriceRaw) : 0;
+          const pieceSubtotal = printVal + modVal + paintVal;
+          const hasExtras = piece.hasModeling || piece.hasPainting;
+
+          const priceHtml = hasExtras
+            ? `
+              <button type="button" data-edit-type="piece-print-price" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Valor Impressão: R$ ${formatBRL(printVal)}</button>
+              ${piece.hasModeling ? `<button type="button" data-edit-type="piece-modeling" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Valor Modelagem: R$ ${formatBRL(modVal)}</button>` : ''}
+              ${piece.hasPainting ? `<button type="button" data-edit-type="piece-painting" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Valor Pintura: R$ ${formatBRL(paintVal)}</button>` : ''}
+              <div class="py-0.5 font-bold">- Valor Total da Peça: R$ ${formatBRL(pieceSubtotal)}</div>
+            `
+            : `
+              <button type="button" data-edit-type="piece-print-price" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Valor: R$ ${formatBRL(printVal)}</button>
+            `;
+
+          return `
+            <div class="space-y-0.5">
+              <button type="button" data-edit-type="piece-name" data-piece-idx="${idx}" class="editable-segment w-full text-left font-bold">PEÇA ${numStr} – ${escapeAttr(pieceNameUpper)}</button>
+              <button type="button" data-edit-type="piece-measure" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Medida principal: ${escapeAttr(measureFormatted)}</button>
+              <button type="button" data-edit-type="piece-quantity" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Quantidade: ${qtyLabel}</button>
+              <button type="button" data-edit-type="piece-material" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Material: ${escapeAttr(materialUpper)}</button>
+              <button type="button" data-edit-type="piece-print-type" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Impressão: ${escapeAttr(printUpper)}</button>
+              <button type="button" data-edit-type="piece-modeling" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Modelagem: ${escapeAttr(modelingText)}</button>
+              <button type="button" data-edit-type="piece-painting" data-piece-idx="${idx}" class="editable-segment w-full text-left">- Pintura: ${escapeAttr(paintingText)}</button>
+              ${priceHtml}
+            </div>
+          `;
+        }).join(`<div class="py-2 text-gray-400 select-none">------------------------------</div>`);
+
+        const piecesChipsHtml = state.pieces.length > 1
+          ? `
+            <div class="flex flex-wrap items-center gap-2 pb-3 mb-3 border-b-2 border-dashed border-brand-black/15 dark:border-brand-darkBorder">
+              <span class="text-[11px] font-extrabold uppercase text-gray-500 dark:text-gray-400">Peças no orçamento:</span>
+              ${state.pieces.map((p, i) => `
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-black text-brand-lime text-xs font-extrabold">
+                  PEÇA ${String(i + 1).padStart(2, '0')}
+                  <button type="button" data-remove-result-piece="${i}" title="Excluir peça" class="w-4 h-4 rounded-full bg-brand-pink text-white flex items-center justify-center text-[10px] hover:bg-brand-pinkHover cursor-pointer">×</button>
+                </span>
+              `).join('')}
+            </div>
+          `
+          : '';
+
+        const paymentSentence = state.hasInstallments
+          ? `O pagamento poderá ser realizado via PIX (CNPJ: 64870514000180) ou cartão de crédito (por link de pagamento). PARA ESTE VALOR, CONSEGUIMOS FAZER EM ATÉ ${installments}X SEM JUROS`
+          : `O pagamento poderá ser realizado via PIX (CNPJ: 64870514000180) ou cartão de crédito (por link de pagamento).`;
+
+        dom.wizardStage.innerHTML = `
+          <section class="bg-brand-lightCard dark:bg-brand-darkCard rounded-3xl p-5 sm:p-7 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal dark:shadow-brutal-dark animate-piece-in space-y-5">
+            <!-- Resumo Financeiro -->
+            <div class="rounded-2xl bg-brand-black text-white p-4 sm:p-5 border-2 border-brand-black">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/15">
+                <div>
+                  <span class="inline-block px-2 py-0.5 rounded bg-brand-lime text-brand-black text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                    Total Geral do Orçamento
+                  </span>
+                  <p class="font-display text-3xl sm:text-4xl font-extrabold text-brand-lime tabular-nums tracking-tight">
+                    R$ ${formatBRL(totals.totalGeneral)}
+                  </p>
+                </div>
+                <div class="px-3 py-1.5 rounded-xl bg-brand-pink text-white font-display font-extrabold text-xs border border-white/20">
+                  ${state.pieces.length} ${state.pieces.length === 1 ? 'PEÇA' : 'PEÇAS'}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-white/[0.06] px-3.5 py-2.5 border border-white/10">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    Sinal 50% (PIX / Cartão)
+                  </p>
+                  <p class="font-display text-base sm:text-lg font-bold text-white tabular-nums mt-0.5">
+                    R$ ${formatBRL(totals.halfValue)}
+                  </p>
+                </div>
+                <div class="rounded-xl bg-white/[0.06] px-3.5 py-2.5 border border-white/10">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    50% na Entrega
+                  </p>
+                  <p class="font-display text-base sm:text-lg font-bold text-white tabular-nums mt-0.5">
+                    R$ ${formatBRL(totals.halfValue)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dica de Edição Interativa por Toque -->
+            <div class="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-brand-lime/45 dark:bg-brand-lime/15 border-[1.5px] border-brand-black dark:border-brand-lime/40">
+              <div class="flex items-center gap-2 text-xs font-extrabold text-brand-black dark:text-brand-lime">
+                <span>👆 Precisa alterar algo? Toque diretamente na linha do orçamento abaixo para editar.</span>
+              </div>
+              <button
+                id="result-add-piece-btn"
+                type="button"
+                class="btn-brutal px-3.5 py-1.5 rounded-xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-xs border-2 border-brand-black shadow-brutal-xs cursor-pointer"
+              >
+                + Adicionar Outra Peça
+              </button>
+            </div>
+
+            ${piecesChipsHtml}
+
+            <!-- Texto Final Interativo (Cada bloco/linha abre seu popup de edição) -->
+            <div
+              id="interactive-quote-container"
+              class="rounded-2xl bg-white dark:bg-[#10110F] border-2 border-brand-black dark:border-brand-darkBorder p-4 sm:p-5 font-mono text-[12px] sm:text-[13px] leading-relaxed text-brand-black dark:text-gray-200 space-y-2"
+            >
+              <div class="space-y-0.5">
+                <button type="button" data-edit-type="client-name" class="editable-segment w-full text-left">NOME DO CLIENTE: ${escapeAttr(clientUpper)}</button>
+                <button type="button" data-edit-type="seller-name" class="editable-segment w-full text-left">NOME DO VENDEDOR: ${escapeAttr(sellerUpper)}</button>
+              </div>
+
+              <div class="py-1 text-gray-400 select-none">------------------------------</div>
+
+              <div class="space-y-2">
+                <div>📣 PROPOSTA COMERCIAL – ENCANTTO3D 📣</div>
+                <div>${headerSubtitle}</div>
+                ${interactivePiecesHtml}
+              </div>
+
+              <div class="py-1 text-gray-400 select-none">------------------------------</div>
+
+              <div class="space-y-0.5">
+                <div class="font-bold">RESUMO DO ORÇAMENTO</div>
+                <div>IMPRESSÃO: R$ ${formatBRL(totals.totalPrint)}</div>
+                ${totals.hasAnyModeling || totals.totalModeling > 0 ? `<div>MODELAGEM: R$ ${formatBRL(totals.totalModeling)}</div>` : ''}
+                ${totals.hasAnyPainting || totals.totalPainting > 0 ? `<div>PINTURA: R$ ${formatBRL(totals.totalPainting)}</div>` : ''}
+                <div class="font-bold">TOTAL GERAL: R$ ${formatBRL(totals.totalGeneral)}</div>
+                <div>ANTECIPAÇÃO (50%): R$ ${formatBRL(totals.halfValue)}</div>
+              </div>
+
+              <div class="py-1 text-gray-400 select-none">------------------------------</div>
+
+              <button type="button" data-edit-type="delivery-days" class="editable-segment w-full text-left">
+                <span class="block font-bold">PRAZO DE ENTREGA</span>
+                <span>Previsão: ${days} ${days === 1 ? 'dia útil' : 'dias úteis'}, contados após aprovação da proposta e confirmação da antecipação.</span>
+              </button>
+
+              <div class="py-1 text-gray-400 select-none">------------------------------</div>
+
+              <button type="button" data-edit-type="installments" class="editable-segment w-full text-left space-y-1">
+                <span class="block font-bold">⚠️ ATENÇÃO – CONDIÇÕES DE PAGAMENTO</span>
+                <span class="block">Para iniciar a fabricação, é necessário o pagamento antecipado de 50% do valor total do pedido (R$ ${formatBRL(totals.halfValue)}).</span>
+                <span class="block">${paymentSentence}</span>
+                <span class="block">O valor antecipado será integralmente abatido do valor total, restando os outros 50% (R$ ${formatBRL(totals.halfValue)}) para pagamento na entrega do pedido.</span>
+              </button>
+
+              <div class="py-1 text-gray-400 select-none">------------------------------</div>
+
+              <div class="space-y-2">
+                <div>ESSE ORÇAMENTO TEM UMA VALIDADE DE 10 (DEZ) DIAS CORRIDOS. APÓS ESSE PRAZO OS VALORES PODEM SOFRER ALTERAÇÕES.</div>
+                <div>Agradecemos pela preferência e pela confiança na Encantto3D! 💚</div>
+              </div>
+            </div>
+
+            <!-- Botões de Ação Finais -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                id="result-copy-btn"
+                type="button"
+                class="btn-brutal w-full h-12 px-5 rounded-2xl bg-brand-pink hover:bg-brand-pinkHover text-white font-display font-bold text-sm sm:text-base tracking-wide border-2 border-brand-black shadow-brutal flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <svg id="copy-icon" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <svg id="check-icon" class="w-5 h-5 shrink-0 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span id="copy-btn-text">Copiar Orçamento</span>
+              </button>
+
+              <button
+                id="result-whatsapp-btn"
+                type="button"
+                class="btn-brutal w-full h-12 px-5 rounded-2xl bg-brand-whatsapp hover:bg-[#20bd5a] text-brand-black font-display font-extrabold text-sm sm:text-base tracking-wide border-2 border-brand-black shadow-brutal flex items-center justify-center gap-2.5 cursor-pointer"
+              >
+                <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/>
+                  <path d="M12 2C6.486 2 2 6.486 2 12c0 1.836.497 3.556 1.363 5.035L2 22l5.125-1.344A9.946 9.946 0 0 0 12 22c5.514 0 10-4.486 10-10S17.514 2 12 2zm0 18.182c-1.576 0-3.05-.448-4.303-1.222l-.309-.191-3.041.798.812-2.965-.201-.32A8.146 8.146 0 0 1 3.818 12c0-4.511 3.67-8.182 8.182-8.182 4.511 0 8.182 3.67 8.182 8.182 0 4.511-3.671 8.182-8.182 8.182z"/>
+                </svg>
+                <span>Enviar no WhatsApp</span>
+              </button>
+            </div>
+
+            <!-- Rodapé com Limpar / Novo Orçamento -->
+            <div class="pt-2 flex items-center justify-between">
+              <button
+                id="result-back-btn"
+                type="button"
+                class="h-10 px-4 rounded-xl bg-white dark:bg-brand-darkElevated hover:bg-gray-100 dark:hover:bg-white/10 text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder font-display font-bold text-xs cursor-pointer"
+              >
+                ← Voltar à Peça
+              </button>
+
+              <button
+                id="result-new-quote-btn"
+                type="button"
+                class="btn-brutal inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-brand-darkCard hover:bg-brand-lime dark:hover:bg-brand-darkElevated text-brand-black dark:text-gray-200 border-2 border-brand-black dark:border-brand-darkBorder shadow-brutal-xs text-xs font-bold cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+                <span>Novo Orçamento</span>
+              </button>
+            </div>
+          </section>
+        `;
+
+        // Toque em qualquer parte do texto final abre o popup com o campo correspondente
+        document.getElementById('interactive-quote-container').addEventListener('click', (e) => {
+          const target = e.target.closest('[data-edit-type]');
+          if (!target) return;
+          const editType = target.dataset.editType;
+          const pieceIdx = target.dataset.pieceIdx !== undefined ? parseInt(target.dataset.pieceIdx, 10) : 0;
+          openQuickEditPopup(editType, pieceIdx);
+        });
+
+        // Excluir peça adicional na tela final
+        dom.wizardStage.querySelectorAll('[data-remove-result-piece]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.removeResultPiece, 10);
+            if (state.pieces.length > 1 && !Number.isNaN(idx)) {
+              state.pieces.splice(idx, 1);
+              state.currentPieceIndex = Math.max(0, state.pieces.length - 1);
+              renderStepResult();
+              showToast('Peça removida do orçamento.');
+            }
+          });
+        });
+
+        // Adicionar outra peça seguindo o passo a passo
+        document.getElementById('result-add-piece-btn').addEventListener('click', () => {
+          state.pieces.push(createDefaultPiece());
+          state.currentPieceIndex = state.pieces.length - 1;
+          state.step = 'piece-modeling-ask';
+          renderWizard();
+        });
+
+        document.getElementById('result-copy-btn').addEventListener('click', handleCopyClick);
+        document.getElementById('result-whatsapp-btn').addEventListener('click', sendToWhatsApp);
+
+        document.getElementById('result-back-btn').addEventListener('click', () => {
+          state.currentPieceIndex = state.pieces.length - 1;
+          state.step = 'piece-painting';
+          renderWizard();
+        });
+
+        document.getElementById('result-new-quote-btn').addEventListener('click', () => {
+          lastSnapshotBeforeReset = JSON.parse(JSON.stringify(state));
+          state.clientName = '';
+          state.deliveryDays = '7';
+          state.hasInstallments = false;
+          state.installmentsCount = '10';
+          state.pieces = [createDefaultPiece()];
+          state.currentPieceIndex = 0;
+          state.hasVisitedResult = false;
+          state.step = 'atendimento';
+          renderWizard();
+          showToast('Orçamento reiniciado.', true);
+        });
+      }
+
+      // =====================================================================
+      // POPUP DE EDIÇÃO RÁPIDA (ABERTO AO TOCAR NO TEXTO FINAL)
+      // =====================================================================
+      function openQuickEditPopup(editType, pieceIdx = 0) {
+        activeQuickEdit = { editType, pieceIdx };
+        const piece = state.pieces[pieceIdx] || state.pieces[0];
+        const numStr = String(pieceIdx + 1).padStart(2, '0');
+
+        let badge = 'Atendimento';
+        let title = 'Editar Campo';
+        let html = '';
+
+        if (editType === 'client-name') {
+          badge = 'Atendimento';
+          title = 'Nome do Cliente';
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Nome do Cliente</label>
+              <input id="qe-input" type="text" value="${escapeAttr(state.clientName)}" placeholder="Ex: Karolayne" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+            </div>
+          `;
+        } else if (editType === 'seller-name') {
+          badge = 'Atendimento';
+          title = 'Nome do Vendedor';
+          const opts = SELLERS.map((s) => `<option value="${escapeAttr(s)}" ${state.sellerName === s ? 'selected' : ''}>${escapeAttr(s)}</option>`).join('');
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Selecione o Vendedor</label>
+              <select id="qe-input" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime">
+                <option value="" ${!state.sellerName ? 'selected' : ''}>Selecionar</option>
+                ${opts}
+              </select>
+            </div>
+          `;
+        } else if (editType === 'piece-name') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Nome da Peça';
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Nome da Peça</label>
+              <input id="qe-input" type="text" value="${escapeAttr(piece.name)}" placeholder="Ex: Plaquinha de nome para mesa" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+            </div>
+          `;
+        } else if (editType === 'piece-measure') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Medida Principal (cm)';
+          html = `
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase text-brand-black/80 dark:text-gray-300">Formato da Medida</span>
+                <button id="qe-toggle-measure" type="button" class="text-xs font-extrabold text-brand-pink dark:text-brand-lime hover:underline cursor-pointer">
+                  ${piece.measureMode === 'single' ? 'Alternar para 3 medidas (L × A × P)' : 'Alternar para medida única'}
+                </button>
+              </div>
+              ${
+                piece.measureMode === 'single'
+                  ? `<input id="qe-input" type="text" value="${escapeAttr(piece.singleMeasure)}" placeholder="Ex: 20 ou 10 x 10 x 10" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-semibold text-brand-black dark:text-white focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />`
+                  : `
+                    <div class="grid grid-cols-3 gap-2">
+                      <input id="qe-dim-l" type="text" value="${escapeAttr(piece.dimL)}" placeholder="L (cm)" class="w-full h-12 px-3 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white" />
+                      <input id="qe-dim-a" type="text" value="${escapeAttr(piece.dimA)}" placeholder="A (cm)" class="w-full h-12 px-3 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white" />
+                      <input id="qe-dim-p" type="text" value="${escapeAttr(piece.dimP)}" placeholder="P (cm)" class="w-full h-12 px-3 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-sm font-semibold text-brand-black dark:text-white" />
+                    </div>
+                  `
+              }
+            </div>
+          `;
+        } else if (editType === 'piece-quantity') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Quantidade de Peças';
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Quantidade</label>
+              <input id="qe-input" type="number" min="1" value="${piece.quantity}" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+            </div>
+          `;
+        } else if (editType === 'piece-material') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Material de Impressão';
+          html = `
+            <div id="qe-mat-grid" class="flex flex-wrap gap-2">
+              ${MATERIALS.map((m) => `
+                <button type="button" data-qe-mat="${m}" class="px-3.5 py-2.5 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder cursor-pointer ${
+                  piece.material === m ? 'bg-brand-lime text-brand-black shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">${m}</button>
+              `).join('')}
+            </div>
+          `;
+        } else if (editType === 'piece-print-type') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Tipo de Impressão';
+          html = `
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" data-qe-print="COLORIDA" class="h-12 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder cursor-pointer ${
+                piece.printType === 'COLORIDA' ? 'bg-brand-pink text-white shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+              }">COLORIDA</button>
+              <button type="button" data-qe-print="MONOCROMÁTICA" class="h-12 rounded-xl text-xs font-extrabold border-2 border-brand-black dark:border-brand-darkBorder cursor-pointer ${
+                piece.printType === 'MONOCROMÁTICA' ? 'bg-brand-pink text-white shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+              }">1 COR (MONO)</button>
+            </div>
+          `;
+        } else if (editType === 'piece-print-price') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Valor da Impressão (R$)';
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Valor da Impressão (R$)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-gray-500">R$</span>
+                <input id="qe-input" type="text" inputmode="decimal" value="${escapeAttr(piece.priceRaw)}" placeholder="59,90" class="w-full h-12 pl-10 pr-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums focus:outline-none focus:border-brand-pink dark:focus:border-brand-lime" />
+              </div>
+            </div>
+          `;
+        } else if (editType === 'piece-modeling') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Modelagem 3D (Adição)';
+          const isArt = piece.modelingType === 'ARTISTICA';
+          html = `
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-qe-mod-enabled="false" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  !piece.hasModeling ? 'bg-brand-black text-brand-lime shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">SEM MODELAGEM</button>
+                <button type="button" data-qe-mod-enabled="true" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  piece.hasModeling ? 'bg-brand-lime text-brand-black shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">COM MODELAGEM</button>
+              </div>
+
+              ${
+                piece.hasModeling
+                  ? `
+                    <div class="grid grid-cols-2 gap-2">
+                      <button type="button" data-qe-mod-type="ARTISTICA" class="h-10 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                        isArt ? 'bg-brand-pink text-white' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                      }">Artística (Orgânica)</button>
+                      <button type="button" data-qe-mod-type="ENGENHARIA" class="h-10 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                        !isArt ? 'bg-brand-pink text-white' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                      }">Engenharia (R$ 100/h)</button>
+                    </div>
+                    ${
+                      isArt
+                        ? `
+                          <div class="grid grid-cols-2 gap-2">
+                            <button type="button" data-qe-mod-scope="AJUSTE" class="h-10 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                              piece.modelingArtisticScope === 'AJUSTE' ? 'bg-brand-black text-brand-lime' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                            }">Apenas um ajuste</button>
+                            <button type="button" data-qe-mod-scope="COMPLETA" class="h-10 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                              piece.modelingArtisticScope === 'COMPLETA' ? 'bg-brand-black text-brand-lime' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                            }">Modelagem completa</button>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Valor da Modelagem (R$)</label>
+                            <input id="qe-mod-art-price" type="text" inputmode="decimal" value="${escapeAttr(piece.modelingArtisticPriceRaw)}" placeholder="120,00" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-bold text-brand-black dark:text-white" />
+                          </div>
+                        `
+                        : `
+                          <div>
+                            <label class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Horas de Modelagem (R$ 100,00/h)</label>
+                            <input id="qe-mod-eng-hours" type="number" min="0.5" step="0.5" value="${escapeAttr(piece.modelingEngineeringHours)}" placeholder="Ex: 2" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-bold text-brand-black dark:text-white" />
+                          </div>
+                        `
+                    }
+                    <div>
+                      <label class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Detalhe (Opcional)</label>
+                      <input id="qe-mod-notes" type="text" value="${escapeAttr(piece.modelingNotes)}" placeholder="Ex: Referência enviada pelo cliente" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-semibold text-brand-black dark:text-white" />
+                    </div>
+                  `
+                  : ''
+              }
+            </div>
+          `;
+        } else if (editType === 'piece-painting') {
+          badge = `PEÇA ${numStr}`;
+          title = 'Pintura da Peça';
+          html = `
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-qe-paint-enabled="false" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  !piece.hasPainting ? 'bg-brand-black text-brand-lime shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">NÃO</button>
+                <button type="button" data-qe-paint-enabled="true" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  piece.hasPainting ? 'bg-brand-lime text-brand-black shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">SIM</button>
+              </div>
+              ${
+                piece.hasPainting
+                  ? `
+                    <div>
+                      <label class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Valor da Pintura (R$)</label>
+                      <input id="qe-paint-price" type="text" inputmode="decimal" value="${escapeAttr(piece.paintPriceRaw)}" placeholder="25,00" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-bold text-brand-black dark:text-white" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Detalhe da Pintura (Opcional)</label>
+                      <input id="qe-paint-detail" type="text" value="${escapeAttr(piece.paintDetail)}" placeholder="Ex: Acabamento fosco" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-semibold text-brand-black dark:text-white" />
+                    </div>
+                  `
+                  : ''
+              }
+            </div>
+          `;
+        } else if (editType === 'delivery-days') {
+          badge = 'Entrega';
+          title = 'Prazo de Entrega (dias úteis)';
+          html = `
+            <div>
+              <label for="qe-input" class="block text-xs font-extrabold uppercase tracking-wider text-brand-black/80 dark:text-gray-300 mb-1.5">Dias úteis</label>
+              <input id="qe-input" type="number" min="1" max="365" value="${escapeAttr(state.deliveryDays)}" class="w-full h-12 px-4 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black dark:border-brand-darkBorder text-base font-bold text-brand-black dark:text-white tabular-nums" />
+            </div>
+          `;
+        } else if (editType === 'installments') {
+          badge = 'Pagamento';
+          title = 'Parcelamento sem Juros';
+          html = `
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-qe-inst="false" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  !state.hasInstallments ? 'bg-brand-black text-brand-lime shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">SEM PARCELAMENTO</button>
+                <button type="button" data-qe-inst="true" class="h-11 rounded-xl text-xs font-extrabold border-2 border-brand-black cursor-pointer ${
+                  state.hasInstallments ? 'bg-brand-lime text-brand-black shadow-brutal-xs' : 'bg-white dark:bg-brand-darkElevated text-brand-black dark:text-white'
+                }">COM PARCELAMENTO</button>
+              </div>
+              ${
+                state.hasInstallments
+                  ? `
+                    <div>
+                      <label for="qe-inst-count" class="block text-xs font-extrabold uppercase mb-1 text-brand-black/80 dark:text-gray-300">Número de parcelas sem juros</label>
+                      <input id="qe-inst-count" type="number" min="2" max="24" value="${escapeAttr(state.installmentsCount)}" class="w-full h-11 px-3.5 rounded-xl bg-white dark:bg-brand-darkElevated border-2 border-brand-black text-sm font-bold text-brand-black dark:text-white tabular-nums" />
+                    </div>
+                  `
+                  : ''
+              }
+            </div>
+          `;
+        }
+
+        dom.quickEditBadge.textContent = badge;
+        dom.quickEditTitle.textContent = title;
+        dom.quickEditBody.innerHTML = html;
+
+        // Eventos internos reativos dentro do popup
+        const toggleMeasureBtn = document.getElementById('qe-toggle-measure');
+        if (toggleMeasureBtn) {
+          toggleMeasureBtn.addEventListener('click', () => {
+            piece.measureMode = piece.measureMode === 'single' ? 'triple' : 'single';
+            openQuickEditPopup('piece-measure', pieceIdx);
+          });
+        }
+
+        dom.quickEditBody.querySelectorAll('[data-qe-mat]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.material = btn.dataset.qeMat;
+            openQuickEditPopup('piece-material', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-print]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.printType = btn.dataset.qePrint;
+            openQuickEditPopup('piece-print-type', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-mod-enabled]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.hasModeling = btn.dataset.qeModEnabled === 'true';
+            openQuickEditPopup('piece-modeling', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-mod-type]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.modelingType = btn.dataset.qeModType;
+            openQuickEditPopup('piece-modeling', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-mod-scope]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.modelingArtisticScope = btn.dataset.qeModScope;
+            openQuickEditPopup('piece-modeling', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-paint-enabled]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            piece.hasPainting = btn.dataset.qePaintEnabled === 'true';
+            openQuickEditPopup('piece-painting', pieceIdx);
+          });
+        });
+
+        dom.quickEditBody.querySelectorAll('[data-qe-inst]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.hasInstallments = btn.dataset.qeInst === 'true';
+            openQuickEditPopup('installments', pieceIdx);
+          });
+        });
+
+        dom.quickEditModal.classList.remove('hidden');
+        dom.quickEditModal.classList.add('flex');
+
+        const focusTarget = dom.quickEditBody.querySelector('input, select');
+        if (focusTarget) {
+          setTimeout(() => focusTarget.focus(), 60);
+        }
+      }
+
+      // Salva os valores editados no popup e atualiza o texto final imediatamente
+      function saveQuickEditPopup() {
+        if (!activeQuickEdit) return;
+        const { editType, pieceIdx } = activeQuickEdit;
+        const piece = state.pieces[pieceIdx] || state.pieces[0];
+
+        if (editType === 'client-name') {
+          state.clientName = document.getElementById('qe-input').value;
+        } else if (editType === 'seller-name') {
+          state.sellerName = document.getElementById('qe-input').value;
+          try {
+            if (state.sellerName) localStorage.setItem(STORAGE_KEYS.SELLER, state.sellerName);
+            else localStorage.removeItem(STORAGE_KEYS.SELLER);
+          } catch (err) {}
+        } else if (editType === 'piece-name') {
+          piece.name = document.getElementById('qe-input').value;
+        } else if (editType === 'piece-measure') {
+          if (piece.measureMode === 'single') {
+            piece.singleMeasure = document.getElementById('qe-input').value;
+          } else {
+            piece.dimL = document.getElementById('qe-dim-l').value;
+            piece.dimA = document.getElementById('qe-dim-a').value;
+            piece.dimP = document.getElementById('qe-dim-p').value;
+          }
+        } else if (editType === 'piece-quantity') {
+          piece.quantity = Math.max(1, parseInt(document.getElementById('qe-input').value, 10) || 1);
+        } else if (editType === 'piece-print-price') {
+          piece.priceRaw = sanitizeMoneyInput(document.getElementById('qe-input').value);
+        } else if (editType === 'piece-modeling' && piece.hasModeling) {
+          if (piece.modelingType === 'ARTISTICA') {
+            const p = document.getElementById('qe-mod-art-price');
+            if (p) piece.modelingArtisticPriceRaw = sanitizeMoneyInput(p.value);
+          } else {
+            const h = document.getElementById('qe-mod-eng-hours');
+            if (h) piece.modelingEngineeringHours = h.value;
+          }
+          const n = document.getElementById('qe-mod-notes');
+          if (n) piece.modelingNotes = n.value;
+        } else if (editType === 'piece-painting' && piece.hasPainting) {
+          const pp = document.getElementById('qe-paint-price');
+          const pd = document.getElementById('qe-paint-detail');
+          if (pp) piece.paintPriceRaw = sanitizeMoneyInput(pp.value);
+          if (pd) piece.paintDetail = pd.value;
+        } else if (editType === 'delivery-days') {
+          state.deliveryDays = document.getElementById('qe-input').value;
+        } else if (editType === 'installments' && state.hasInstallments) {
+          const ic = document.getElementById('qe-inst-count');
+          if (ic) state.installmentsCount = ic.value;
+        }
+
+        closeQuickEditPopup();
+        renderStepResult();
+        showToast('Alteração salva no orçamento!');
+      }
+
+      function closeQuickEditPopup() {
+        activeQuickEdit = null;
+        dom.quickEditModal.classList.add('hidden');
+        dom.quickEditModal.classList.remove('flex');
+      }
+
+      // Exibe notificação toast flutuante
+      function showToast(message, showUndo = false) {
+        dom.toastMessage.textContent = message;
+        if (showUndo) {
+          dom.toastUndoBtn.classList.remove('hidden');
+        } else {
+          dom.toastUndoBtn.classList.add('hidden');
+        }
+
+        dom.toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+        dom.toast.classList.add('opacity-100', 'translate-y-0');
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          dom.toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+          dom.toast.classList.remove('opacity-100', 'translate-y-0');
+        }, showUndo ? 5500 : 2800);
+      }
+
+      // Verifica campos não preenchidos antes de copiar
+      function getMissingFields() {
+        const missing = [];
+
+        if (!state.clientName.trim()) {
+          missing.push({ tag: 'Atendimento', label: 'Nome do Cliente', editType: 'client-name', pieceIdx: 0 });
+        }
+
+        if (!state.sellerName.trim()) {
+          missing.push({ tag: 'Atendimento', label: 'Nome do Vendedor', editType: 'seller-name', pieceIdx: 0 });
+        }
+
+        const days = parseInt(state.deliveryDays, 10);
+        if (!String(state.deliveryDays || '').trim() || Number.isNaN(days) || days < 1) {
+          missing.push({ tag: 'Entrega', label: 'Prazo de entrega (dias úteis)', editType: 'delivery-days', pieceIdx: 0 });
+        }
+
+        if (state.hasInstallments) {
+          const inst = parseInt(state.installmentsCount, 10);
+          if (!String(state.installmentsCount || '').trim() || Number.isNaN(inst) || inst < 2) {
+            missing.push({ tag: 'Pagamento', label: 'Número de parcelas sem juros', editType: 'installments', pieceIdx: 0 });
+          }
+        }
+
+        state.pieces.forEach((piece, idx) => {
+          const numStr = `PEÇA ${String(idx + 1).padStart(2, '0')}`;
+
+          if (piece.hasModeling) {
+            if (piece.modelingType === 'ARTISTICA') {
+              if (!piece.modelingArtisticPriceRaw.trim() || parseCurrency(piece.modelingArtisticPriceRaw) <= 0) {
+                missing.push({ tag: numStr, label: 'Valor da Modelagem Artística (R$)', editType: 'piece-modeling', pieceIdx: idx });
+              }
+            } else {
+              const hours = parseFloat(String(piece.modelingEngineeringHours || '').replace(',', '.'));
+              if (!String(piece.modelingEngineeringHours || '').trim() || Number.isNaN(hours) || hours <= 0) {
+                missing.push({ tag: numStr, label: 'Horas de Modelagem (Engenharia)', editType: 'piece-modeling', pieceIdx: idx });
+              }
+            }
+          }
+
+          if (!piece.name.trim()) {
+            missing.push({ tag: numStr, label: 'Nome da Peça', editType: 'piece-name', pieceIdx: idx });
+          }
+
+          if (piece.measureMode === 'single') {
+            if (!piece.singleMeasure.trim()) {
+              missing.push({ tag: numStr, label: 'Medida Principal (cm)', editType: 'piece-measure', pieceIdx: idx });
+            }
+          } else if (!piece.dimL.trim() || !piece.dimA.trim() || !piece.dimP.trim()) {
+            missing.push({ tag: numStr, label: 'Medida Principal (L × A × P)', editType: 'piece-measure', pieceIdx: idx });
+          }
+
+          if (!piece.priceRaw.trim() || parseCurrency(piece.priceRaw) <= 0) {
+            missing.push({ tag: numStr, label: 'Valor da Impressão (R$)', editType: 'piece-print-price', pieceIdx: idx });
+          }
+
+          if (piece.hasPainting && (!piece.paintPriceRaw.trim() || parseCurrency(piece.paintPriceRaw) <= 0)) {
+            missing.push({ tag: numStr, label: 'Valor da Pintura (R$)', editType: 'piece-painting', pieceIdx: idx });
+          }
+        });
+
+        return missing;
+      }
+
+      function openValidationModal(missingItems) {
+        firstMissingItem = missingItems[0] || null;
+        dom.missingFieldsList.innerHTML = missingItems
+          .map(
+            (item) => `
+              <li class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white dark:bg-brand-darkElevated border-[1.5px] border-brand-black/20 dark:border-brand-darkBorder text-xs">
+                <span class="font-bold text-brand-black dark:text-white">${escapeAttr(item.label)}</span>
+                <span class="shrink-0 px-2 py-0.5 rounded-md bg-brand-black text-brand-lime font-display font-extrabold text-[10px]">
+                  ${escapeAttr(item.tag)}
+                </span>
+              </li>
+            `
+          )
+          .join('');
+
+        dom.validationModal.classList.remove('hidden');
+        dom.validationModal.classList.add('flex');
+        dom.modalEditBtn.focus();
+      }
+
+      function closeValidationModal(openEditAfter = false) {
+        dom.validationModal.classList.add('hidden');
+        dom.validationModal.classList.remove('flex');
+
+        if (openEditAfter && firstMissingItem) {
+          openQuickEditPopup(firstMissingItem.editType, firstMissingItem.pieceIdx);
+        }
+      }
+
+      function performCopyToClipboard() {
+        const text = buildPlainQuoteText();
+
+        const onSuccess = () => {
+          const copyIcon = document.getElementById('copy-icon');
+          const checkIcon = document.getElementById('check-icon');
+          const copyBtnText = document.getElementById('copy-btn-text');
+
+          if (copyIcon) copyIcon.classList.add('hidden');
+          if (checkIcon) checkIcon.classList.remove('hidden');
+          if (copyBtnText) copyBtnText.textContent = 'Orçamento Copiado!';
+          showToast('Orçamento copiado para a área de transferência!');
+
+          setTimeout(() => {
+            if (copyIcon) copyIcon.classList.remove('hidden');
+            if (checkIcon) checkIcon.classList.add('hidden');
+            if (copyBtnText) copyBtnText.textContent = 'Copiar Orçamento';
+          }, 2200);
+        };
+
+        const fallbackCopy = () => {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            onSuccess();
+          } catch (err) {
+            showToast('Não foi possível copiar automaticamente.');
+          }
+          document.body.removeChild(textarea);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(onSuccess).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+      }
+
+      function handleCopyClick() {
+        const missing = getMissingFields();
+        if (missing.length > 0) {
+          openValidationModal(missing);
+          return;
+        }
+        performCopyToClipboard();
+      }
+
+      function sendToWhatsApp() {
+        const text = buildPlainQuoteText();
+        const encoded = encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank', 'noopener,noreferrer');
+      }
+
+      function applyTheme(isDark) {
+        const htmlEl = document.documentElement;
+        if (isDark) {
+          htmlEl.classList.add('dark');
+          dom.iconSun.classList.remove('hidden');
+          dom.iconMoon.classList.add('hidden');
+          dom.themeLabel.textContent = 'Modo Claro';
+        } else {
+          htmlEl.classList.remove('dark');
+          dom.iconSun.classList.add('hidden');
+          dom.iconMoon.classList.remove('hidden');
+          dom.themeLabel.textContent = 'Modo Escuro';
+        }
+      }
+
+      function bindGlobalEvents() {
+        dom.jumpToResultBtn.addEventListener('click', () => {
+          state.step = 'result';
+          renderWizard();
+        });
+
+        dom.toastUndoBtn.addEventListener('click', () => {
+          if (!lastSnapshotBeforeReset) return;
+          state = lastSnapshotBeforeReset;
+          lastSnapshotBeforeReset = null;
+          renderWizard();
+          showToast('Orçamento restaurado!');
+        });
+
+        // Modal de Aviso de Segurança
+        dom.modalEditBtn.addEventListener('click', () => closeValidationModal(true));
+        dom.modalConfirmCopyBtn.addEventListener('click', () => {
+          closeValidationModal(false);
+          performCopyToClipboard();
+        });
+        dom.validationModal.addEventListener('click', (e) => {
+          if (e.target === dom.validationModal) closeValidationModal(false);
+        });
+
+        // Popup de Edição Rápida
+        dom.quickEditCloseBtn.addEventListener('click', closeQuickEditPopup);
+        dom.quickEditCancelBtn.addEventListener('click', closeQuickEditPopup);
+        dom.quickEditSaveBtn.addEventListener('click', saveQuickEditPopup);
+        dom.quickEditModal.addEventListener('click', (e) => {
+          if (e.target === dom.quickEditModal) closeQuickEditPopup();
+        });
+        dom.quickEditBody.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            saveQuickEditPopup();
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (!dom.quickEditModal.classList.contains('hidden')) closeQuickEditPopup();
+            if (!dom.validationModal.classList.contains('hidden')) closeValidationModal(false);
+          }
+        });
+
+        // Alternar Tema
+        dom.themeToggle.addEventListener('click', () => {
+          const isDark = !document.documentElement.classList.contains('dark');
+          applyTheme(isDark);
+          try {
+            localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+          } catch (err) {}
+        });
+      }
+
+      function init() {
+        let savedSeller = '';
+        let savedTheme = '';
+
+        try {
+          savedSeller = localStorage.getItem(STORAGE_KEYS.SELLER) || '';
+          savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || '';
+        } catch (err) {}
+
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+        if (savedSeller && SELLERS.includes(savedSeller)) {
+          state.sellerName = savedSeller;
+        } else {
+          state.sellerName = '';
+        }
+
+        state.pieces = [createDefaultPiece()];
+        bindGlobalEvents();
+        renderWizard();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
